@@ -49,14 +49,9 @@ impl System for PrintStepSystem {
 
 impl System for MoveSystem {
 	fn update(&mut self, manager: &mut ComponentsManager) {
-		let entity_ids = manager.get_entity_ids::<Position, Velocity>();
+		let entity_ids = manager.get_entity_ids::<Velocity, Position>();
 		for id in entity_ids.iter() {
-			// UGH...
-			let velocity = {
-				let velocity = manager.borrow_component::<Velocity>(*id).unwrap();
-				Velocity{ x: velocity.x, y: velocity.y }
-			};
-			let position = manager.borrow_component_mut::<Position>(*id).unwrap();
+			let (velocity, position) = manager.borrow_components_ref_mut::<Velocity, Position>(*id).unwrap();
 			position.x += velocity.x;
 			position.y += velocity.y;
 		}
