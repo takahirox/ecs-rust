@@ -130,6 +130,29 @@ impl ComponentsManager {
 		v
 	}
 
+	pub fn get_entity_ids_for_triple
+		<T: 'static + Component, U: 'static + Component, V: 'static + Component>(&self) -> Vec<usize> {
+		let mut v = Vec::new();
+
+		if ! self.has_component_manager::<T>() ||
+			! self.has_component_manager::<U>() ||
+			! self.has_component_manager::<V>() {
+			// @TODO: Better error handling
+			println!("Unknown component");
+			return v;
+		}
+
+		let entity_ids = self.borrow_component_manager::<T>().borrow_entity_ids();
+		let manager1 = self.borrow_component_manager::<U>();
+		let manager2 = self.borrow_component_manager::<V>();
+		for id in entity_ids.iter() {
+			if manager1.has(*id) && manager2.has(*id) {
+				v.push(*id);
+			}
+		}
+		v
+	}
+
 	pub fn borrow_component<T: 'static + Component>(&self, entity_id: usize) -> Option<&T> {
 		match self.has_component_manager::<T>() {
 			true => self.borrow_component_manager::<T>()
@@ -187,6 +210,35 @@ impl ComponentsManager {
 		Some((
 			manager1.borrow_component_mut(entity_id).unwrap(),
 			manager2.borrow_component_mut(entity_id).unwrap()
+		))
+	}
+
+	pub fn borrow_component_triple_mut
+		<T: 'static + Component, U: 'static + Component, V: 'static + Component>
+		(&mut self, entity_id: usize)
+		-> Option<(&mut T, &mut U, &mut V)> {
+		if ! self.has_component_manager::<T>() ||
+			! self.has_component_manager::<U>() ||
+			! self.has_component_manager::<V>() {
+			return None;
+		}
+
+		let type_id1 = TypeId::of::<T>();
+		let type_id2 = TypeId::of::<U>();
+		let type_id3 = TypeId::of::<V>();
+
+		let manager1 = cast_manager_mut_unsafe(self.manager_map.get(&type_id1).unwrap());
+		let manager2 = cast_manager_mut_unsafe(self.manager_map.get(&type_id2).unwrap());
+		let manager3 = cast_manager_mut_unsafe(self.manager_map.get(&type_id3).unwrap());
+
+		if !manager1.has(entity_id) || !manager2.has(entity_id) || !manager3.has(entity_id) {
+			return None;
+		}
+
+		Some((
+			manager1.borrow_component_mut(entity_id).unwrap(),
+			manager2.borrow_component_mut(entity_id).unwrap(),
+			manager3.borrow_component_mut(entity_id).unwrap()
 		))
 	}
 
