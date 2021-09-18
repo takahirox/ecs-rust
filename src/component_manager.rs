@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::any::{Any, TypeId};
+use std::mem::transmute;
 
 use super::component::Component;
 
@@ -78,24 +79,21 @@ impl<T: Component> ComponentManager<T> {
 }
 
 pub struct ComponentsManager {
-	manager_index_map: HashMap<TypeId, usize>,
-	manager_vec: Vec<Box<dyn ComponentManagerTrait>>
+	manager_map: HashMap<TypeId, Box<dyn ComponentManagerTrait>>
 }
 
 impl ComponentsManager {
 	pub fn new() -> Self {
 		ComponentsManager {
-			manager_index_map: HashMap::new(),
-			manager_vec: Vec::new()
+			manager_map: HashMap::new()
 		}
 	}
 
 	pub fn register<T: 'static + Component>(&mut self) -> &mut Self {
-		let type_id = TypeId::of::<T>();
 		// @TODO: Error handling if already registered?
-		if ! self.manager_index_map.contains_key(&type_id) {
-			self.manager_index_map.insert(type_id, self.manager_vec.len());
-			self.manager_vec.push(Box::new(ComponentManager::<T>::new()));
+		if ! self.has_component_manager::<T>() {
+			let type_id = TypeId::of::<T>();
+			self.manager_map.insert(type_id, Box::new(ComponentManager::<T>::new()));
 		}
 		self
 	}
@@ -112,7 +110,7 @@ impl ComponentsManager {
 	}
 
 	// @TODO: Optimize. Doing this in every world.update() is very inefficient.
-	pub fn get_entity_ids<T: 'static + Component, U: 'static + Component>(&self) -> Vec<usize> {
+	pub fn get_entity_ids_for_pair<T: 'static + Component, U: 'static + Component>(&self) -> Vec<usize> {
 		let mut v = Vec::new();
 
 		if ! self.has_component_manager::<T>() ||
@@ -130,6 +128,22 @@ impl ComponentsManager {
 			}
 		}
 		v
+	}
+
+	pub fn borrow_component<T: 'static + Component>(&self, entity_id: usize) -> Option<&T> {
+		match self.has_component_manager::<T>() {
+			true => self.borrow_component_manager::<T>()
+				.borrow_component(entity_id),
+			false => None
+		}
+	}
+
+	pub fn borrow_component_mut<T: 'static + Component>(&mut self, entity_id: usize) -> Option<&mut T> {
+		match self.has_component_manager::<T>() {
+			true => self.borrow_component_manager_mut::<T>()
+				.borrow_component_mut(entity_id),
+			false => None
+		}
 	}
 
 	pub fn borrow_components<T: 'static + Component>(&self) -> Option<&Vec<T>> {
@@ -152,94 +166,43 @@ impl ComponentsManager {
 		}
 	}
 
-	pub fn borrow_component<T: 'static + Component>(&self, entity_id: usize) -> Option<&T> {
-		match self.has_component_manager::<T>() {
-			true => self.borrow_component_manager::<T>()
-				.borrow_component(entity_id),
-			false => None
-		}
-	}
-
-	pub fn borrow_component_mut<T: 'static + Component>(&mut self, entity_id: usize) -> Option<&mut T> {
-		match self.has_component_manager::<T>() {
-			true => self.borrow_component_manager_mut::<T>()
-				.borrow_component_mut(entity_id),
-			false => None
-		}
-	}
-
-	pub fn borrow_components_ref_mut
-		<T: 'static + Component, U: 'static + Component>
-		(&mut self, entity_id: usize) -> Option<(&T, &mut U)> {
-		if !self.has_component_manager::<T>() ||
-			!self.has_component_manager::<U>() {
+	pub fn borrow_component_pair_mut
+		<T: 'static + Component, U: 'static + Component>(&mut self, entity_id: usize)
+		-> Option<(&mut T, &mut U)> {
+		if ! self.has_component_manager::<T>() ||
+			! self.has_component_manager::<U>() {
 			return None;
 		}
 
-		let (index1, index2) = self.get_manager_indices::<T, U>();
+		let type_id1 = TypeId::of::<T>();
+		let type_id2 = TypeId::of::<U>();
 
-		let (manager_ref, manager_mut) = if index1 < index2 {
-			let (left, right) = self.manager_vec.split_at_mut(index2);
-			(&left[index1], &mut right[0])
-		} else {
-			let (left, right) = self.manager_vec.split_at_mut(index1);
-			(&right[0], &mut left[index2])
-		};
+		let manager1 = cast_manager_mut_unsafe(self.manager_map.get(&type_id1).unwrap());
+		let manager2 = cast_manager_mut_unsafe(self.manager_map.get(&type_id2).unwrap());
 
-		let component_ref = cast_manager::<T>(manager_ref).borrow_component(entity_id).unwrap();
-		let component_mut = cast_manager_mut::<U>(manager_mut).borrow_component_mut(entity_id).unwrap();
-
-		Some((component_ref, component_mut))
-	}
-
-	pub fn borrow_components_mut_mut
-		<T: 'static + Component, U: 'static + Component>
-		(&mut self, entity_id: usize) -> Option<(&mut T, &mut U)> {
-		if !self.has_component_manager::<T>() ||
-			!self.has_component_manager::<U>() {
+		if !manager1.has(entity_id) || !manager2.has(entity_id) {
 			return None;
 		}
 
-		let (index1, index2) = self.get_manager_indices::<T, U>();
-
-		let (manager_mut1, manager_mut2) = if index1 < index2 {
-			let (left, right) = self.manager_vec.split_at_mut(index2);
-			(&mut left[index1], &mut right[0])
-		} else {
-			let (left, right) = self.manager_vec.split_at_mut(index1);
-			(&mut right[0], &mut left[index2])
-		};
-
-		let component_mut1 = cast_manager_mut::<T>(manager_mut1).borrow_component_mut(entity_id).unwrap();
-		let component_mut2 = cast_manager_mut::<U>(manager_mut2).borrow_component_mut(entity_id).unwrap();
-
-		Some((component_mut1, component_mut2))
+		Some((
+			manager1.borrow_component_mut(entity_id).unwrap(),
+			manager2.borrow_component_mut(entity_id).unwrap()
+		))
 	}
 
 	fn has_component_manager<T: 'static + Component>(&self) -> bool {
 		let type_id = TypeId::of::<T>();
-		self.manager_index_map.contains_key(&type_id)
+		self.manager_map.contains_key(&type_id)
 	}
 
 	fn borrow_component_manager<T: 'static + Component>(&self) -> &ComponentManager<T> {
 		let type_id = TypeId::of::<T>();
-		let index = *self.manager_index_map.get(&type_id).unwrap();
-		cast_manager(&self.manager_vec[index])
+		cast_manager(self.manager_map.get(&type_id).unwrap())
 	}
 
 	fn borrow_component_manager_mut<T: 'static + Component>(&mut self) -> &mut ComponentManager<T> {
 		let type_id = TypeId::of::<T>();
-		let index = *self.manager_index_map.get(&type_id).unwrap();
-		cast_manager_mut(&mut self.manager_vec[index])
-	}
-
-	fn get_manager_indices
-		<T: 'static + Component, U: 'static + Component>
-		(&self) -> (usize, usize) {
-		let (type_id1, type_id2) = get_type_ids::<T, U>();
-		let index1 = *self.manager_index_map.get(&type_id1).unwrap();
-		let index2 = *self.manager_index_map.get(&type_id2).unwrap();
-		(index1, index2)
+		cast_manager_mut(self.manager_map.get_mut(&type_id).unwrap())
 	}
 }
 
@@ -259,8 +222,9 @@ fn cast_manager_mut<T: 'static + Component>
 		.unwrap()
 }
 
-fn get_type_ids<T: 'static + Component, U: 'static + Component>() -> (TypeId, TypeId) {
-	let type_id1 = TypeId::of::<T>();
-	let type_id2 = TypeId::of::<U>();
-	(type_id1, type_id2)
+fn cast_manager_mut_unsafe<T: 'static + Component>
+	(manager: &Box<dyn ComponentManagerTrait>) -> &mut ComponentManager<T> {
+	let ptr = cast_manager(manager)
+		as *const ComponentManager<T> as *mut ComponentManager<T>;
+	unsafe { transmute(ptr) }
 }
