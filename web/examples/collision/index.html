@@ -7,6 +7,11 @@
     <canvas id="canvas" width="768" height="432"></canvas>
     <script type="module">
       import init from './ecs_rust_web_example_collision.js';
+
+      const canvas = document.getElementById('canvas');
+      canvas.width = Math.max(100, window.innerWidth - 20);
+      canvas.height = Math.max(100, window.innerHeight - 20);
+
       init().catch(console.error);;
     </script>
   </body>
