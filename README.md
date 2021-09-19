@@ -175,7 +175,7 @@ The library is released at [crates.io](https://crates.io/crates/ecs_rust). Add t
 
 ```
 [dependencies]
-ecs_rust = "0.0.1"
+ecs_rust = "0.0.2"
 ```
 
 And add the following lines in your Rust code to import the library.

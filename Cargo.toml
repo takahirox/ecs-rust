@@ -1,6 +1,6 @@
 [package]
 name = "ecs_rust"
-version = "0.0.1"
+version = "0.0.2"
 description = "ECS in Rust"
 authors = ["Takahiro <hogehoge@gachapin.jp>"]
 edition = "2018"
