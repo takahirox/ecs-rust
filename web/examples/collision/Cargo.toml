@@ -1,0 +1,24 @@
+[package]
+name = "ecs_rust_web_example_collision"
+version = "0.1.0"
+authors = ["Takahiro <hogehoge@gachapin.jp>"]
+edition = "2018"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+ecs_rust = {path = "../../../"}
+js-sys = "0.3.55"
+wasm-bindgen = "0.2.78"
+
+[dependencies.web-sys]
+version = "0.3.4"
+features = [
+  "CanvasRenderingContext2d",
+  "Document",
+  "Element",
+  "HtmlCanvasElement",
+  "Window",
+]
