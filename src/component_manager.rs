@@ -109,6 +109,15 @@ impl ComponentsManager {
 		self
 	}
 
+	pub fn borrow_entity_ids<T: 'static + Component>(&self) -> &Vec<usize> {
+		if ! self.has_component_manager::<T>() {
+			// @TODO: Better error handling
+			panic!("Unknown component");
+		}
+
+		self.borrow_component_manager::<T>().borrow_entity_ids()
+	}
+
 	// @TODO: Optimize. Doing this in every world.update() is very inefficient.
 	pub fn get_entity_ids_for_pair<T: 'static + Component, U: 'static + Component>(&self) -> Vec<usize> {
 		let mut v = Vec::new();
