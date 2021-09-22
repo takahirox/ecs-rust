@@ -139,6 +139,7 @@ impl ComponentsManager {
 		v
 	}
 
+	// @TODO: Optimize. Doing this in every world.update() is very inefficient.
 	pub fn get_entity_ids_for_triple
 		<T: 'static + Component, U: 'static + Component, V: 'static + Component>(&self) -> Vec<usize> {
 		let mut v = Vec::new();
@@ -156,6 +157,32 @@ impl ComponentsManager {
 		let manager2 = self.borrow_component_manager::<V>();
 		for id in entity_ids.iter() {
 			if manager1.has(*id) && manager2.has(*id) {
+				v.push(*id);
+			}
+		}
+		v
+	}
+
+	// @TODO: Optimize. Doing this in every world.update() is very inefficient.
+	pub fn get_entity_ids_for_quad
+		<T: 'static + Component, U: 'static + Component, V: 'static + Component, W: 'static + Component>(&self) -> Vec<usize> {
+		let mut v = Vec::new();
+
+		if ! self.has_component_manager::<T>() ||
+			! self.has_component_manager::<U>() ||
+			! self.has_component_manager::<V>() ||
+			! self.has_component_manager::<W>() {
+			// @TODO: Better error handling
+			println!("Unknown component");
+			return v;
+		}
+
+		let entity_ids = self.borrow_component_manager::<T>().borrow_entity_ids();
+		let manager1 = self.borrow_component_manager::<U>();
+		let manager2 = self.borrow_component_manager::<V>();
+		let manager3 = self.borrow_component_manager::<W>();
+		for id in entity_ids.iter() {
+			if manager1.has(*id) && manager2.has(*id) && manager3.has(*id) {
 				v.push(*id);
 			}
 		}
@@ -248,6 +275,39 @@ impl ComponentsManager {
 			manager1.borrow_component_mut(entity_id).unwrap(),
 			manager2.borrow_component_mut(entity_id).unwrap(),
 			manager3.borrow_component_mut(entity_id).unwrap()
+		))
+	}
+
+	pub fn borrow_component_quad_mut
+		<T: 'static + Component, U: 'static + Component, V: 'static + Component, W: 'static + Component>
+		(&mut self, entity_id: usize)
+		-> Option<(&mut T, &mut U, &mut V, &mut W)> {
+		if ! self.has_component_manager::<T>() ||
+			! self.has_component_manager::<U>() ||
+			! self.has_component_manager::<V>() ||
+			! self.has_component_manager::<W>() {
+			return None;
+		}
+
+		let type_id1 = TypeId::of::<T>();
+		let type_id2 = TypeId::of::<U>();
+		let type_id3 = TypeId::of::<V>();
+		let type_id4 = TypeId::of::<W>();
+
+		let manager1 = cast_manager_mut_unsafe(self.manager_map.get(&type_id1).unwrap());
+		let manager2 = cast_manager_mut_unsafe(self.manager_map.get(&type_id2).unwrap());
+		let manager3 = cast_manager_mut_unsafe(self.manager_map.get(&type_id3).unwrap());
+		let manager4 = cast_manager_mut_unsafe(self.manager_map.get(&type_id4).unwrap());
+
+		if !manager1.has(entity_id) || !manager2.has(entity_id) || !manager3.has(entity_id) || !manager4.has(entity_id) {
+			return None;
+		}
+
+		Some((
+			manager1.borrow_component_mut(entity_id).unwrap(),
+			manager2.borrow_component_mut(entity_id).unwrap(),
+			manager3.borrow_component_mut(entity_id).unwrap(),
+			manager4.borrow_component_mut(entity_id).unwrap()
 		))
 	}
 
