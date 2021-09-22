@@ -103,6 +103,9 @@ struct Rectangle {
 	height: f64
 }
 
+// ecs-rust doesn't support entity removal yet so
+// managing removed bricks with Visibility component for now.
+// @TODO: Support entity removal in ecs-rust
 struct Visibility {
 	visible: bool
 }
@@ -267,7 +270,7 @@ impl BallVausCollisionSystem {
 
 impl System for BallBricksCollisionSystem {
 	fn update(&mut self, manager: &mut ComponentsManager) {
-		let ball_entity_id = manager.borrow_entity_ids::<Ball>()[0];
+		let ball_entity_id = manager.get_entity_ids_for_triple::<Ball, Position, Velocity>()[0];
 		let ids = manager.get_entity_ids_for_triple::<Brick, Position, Visibility>();
 		for id in ids.iter() {
 			if !manager.borrow_component::<Visibility>(*id).unwrap().visible {
@@ -348,8 +351,7 @@ impl RenderSystem {
 	fn render_bricks(context: &web_sys::CanvasRenderingContext2d, manager: &ComponentsManager) {
 		let ids = manager.get_entity_ids_for_triple::<Position, Brick, Visibility>();
 		for id in ids.iter() {
-			let visibility = manager.borrow_component::<Visibility>(*id).unwrap();
-			if !visibility.visible {
+			if !manager.borrow_component::<Visibility>(*id).unwrap().visible {
 				continue;
 			}
 			let (x, y, width, height) = get_rect_param(manager, *id);
