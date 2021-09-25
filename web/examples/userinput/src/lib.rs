@@ -5,8 +5,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use ecs_rust::world::World;
+use ecs_rust::entity_manager::EntityManager;
 use ecs_rust::component::Component;
-use ecs_rust::component_manager::ComponentsManager;
 use ecs_rust::system::System;
 
 const CANVAS_ID: &str = "canvas";
@@ -138,7 +138,7 @@ impl Component for Collidable {
 }
 
 impl System for UserInputReflectSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let ids = manager.get_entity_ids_for_pair::<Position, UserObject>();
 		for id in ids.iter() {
 			let (x, y) = fetch_user_input_buffer();
@@ -152,7 +152,7 @@ impl System for UserInputReflectSystem {
 }
 
 impl System for MoveSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let ids = manager.get_entity_ids_for_pair::<Position, Velocity>();
 		for id in ids.iter() {
 			let (position, velocity) = manager.borrow_component_pair_mut::<Position, Velocity>(*id).unwrap();
@@ -163,7 +163,7 @@ impl System for MoveSystem {
 }
 
 impl System for ReflectBoundarySystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let (canvas_width, canvas_height) = {
 			let canvas_size = &manager.borrow_components::<CanvasSize>().unwrap()[0];
 			(canvas_size.width, canvas_size.height)
@@ -188,7 +188,7 @@ impl System for ReflectBoundarySystem {
 }
 
 impl System for CollisionSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let user_entity_id = manager.get_entity_ids_for_triple::<Position, Circle, UserObject>()[0];
 		let ids = manager.get_entity_ids_for_triple::<Position, Circle, Collidable>();
 		for id in ids.iter() {
@@ -200,7 +200,7 @@ impl System for CollisionSystem {
 }
 
 impl CollisionSystem {
-	fn check_collision(manager: &ComponentsManager, entity_id1: usize, entity_id2: usize) -> bool {
+	fn check_collision(manager: &EntityManager, entity_id1: usize, entity_id2: usize) -> bool {
 		let (x1, y1, radius1) = CollisionSystem::get_circle_param(manager, entity_id1);
 		let (x2, y2, radius2) = CollisionSystem::get_circle_param(manager, entity_id2);
 		let dx = x1 - x2;
@@ -208,7 +208,7 @@ impl CollisionSystem {
 		(dx * dx + dy * dy).sqrt() < (radius1 + radius2)
 	}
 
-	fn reflect(manager: &mut ComponentsManager, user_entity_id: usize, entity_id: usize) {
+	fn reflect(manager: &mut EntityManager, user_entity_id: usize, entity_id: usize) {
 		let (user_x, user_y, user_radius) = CollisionSystem::get_circle_param(manager, user_entity_id);
 		let (x, y, radius) = CollisionSystem::get_circle_param(manager, entity_id);
 
@@ -233,7 +233,7 @@ impl CollisionSystem {
 		velocity.y = new_vy;
 	}
 
-	fn get_circle_param(manager: &ComponentsManager, entity_id: usize) -> (f64, f64, f64) {
+	fn get_circle_param(manager: &EntityManager, entity_id: usize) -> (f64, f64, f64) {
 		let position = manager.borrow_component::<Position>(entity_id).unwrap();
 		let circle = manager.borrow_component::<Circle>(entity_id).unwrap();
 		(position.x, position.y, circle.radius)
@@ -241,7 +241,7 @@ impl CollisionSystem {
 }
 
 impl System for RenderSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let (canvas_width, canvas_height) = RenderSystem::get_canvas_size(manager);
 
 		// @TODO: Is getting context every frame costly?
@@ -253,7 +253,7 @@ impl System for RenderSystem {
 }
 
 impl RenderSystem {
-	fn get_canvas_size(manager: &ComponentsManager) -> (f64, f64) {
+	fn get_canvas_size(manager: &EntityManager) -> (f64, f64) {
 		let canvas_size = &manager.borrow_components::<CanvasSize>().unwrap()[0];
 		(canvas_size.width, canvas_size.height)
 	}
@@ -262,7 +262,7 @@ impl RenderSystem {
 		context.clear_rect(0.0, 0.0, width, height);
 	}
 
-	fn render_user_circle(context: &web_sys::CanvasRenderingContext2d, manager: &ComponentsManager) {
+	fn render_user_circle(context: &web_sys::CanvasRenderingContext2d, manager: &EntityManager) {
 		let ids = manager.get_entity_ids_for_triple::<Position, Circle, UserObject>();
 		for id in ids.iter() {
 			let position = manager.borrow_component::<Position>(*id).unwrap();
@@ -271,7 +271,7 @@ impl RenderSystem {
 		}
 	}
 
-	fn render_other_circles(context: &web_sys::CanvasRenderingContext2d, manager: &ComponentsManager) {
+	fn render_other_circles(context: &web_sys::CanvasRenderingContext2d, manager: &EntityManager) {
 		let ids = manager.get_entity_ids_for_triple::<Position, Circle, Collidable>();
 		for id in ids.iter() {
 			let position = manager.borrow_component::<Position>(*id).unwrap();

@@ -30,8 +30,8 @@ T.B.D.
 ```Rust
 // Import ecs-rust
 use ecs_rust::world::World;
+use ecs_rust::entity_manager::EntityManager;
 use ecs_rust::component::Component;
-use ecs_rust::component_manager::ComponentsManager;
 use ecs_rust::system::System;
 
 // Define Components and Systems
@@ -66,7 +66,7 @@ impl Component for Velocity {}
 impl Component for Step {}
 
 impl System for PrintStepSystem {
-  fn update(&mut self, manager: &mut ComponentsManager) {
+  fn update(&mut self, manager: &mut EntityManager) {
     let steps = manager.borrow_components_mut::<Step>().unwrap();
     for step in steps.iter_mut() {
       step.num += 1;
@@ -76,7 +76,7 @@ impl System for PrintStepSystem {
 }
 
 impl System for MoveSystem {
-  fn update(&mut self, manager: &mut ComponentsManager) {
+  fn update(&mut self, manager: &mut EntityManager) {
     let entity_ids = manager.get_entity_ids_for_pair::<Velocity, Position>();
     for id in entity_ids.iter() {
       let (velocity, mut position) = manager.borrow_component_pair_mut::<Velocity, Position>(*id).unwrap();
@@ -87,7 +87,7 @@ impl System for MoveSystem {
 }
 
 impl System for PrintPositionSystem {
-  fn update(&mut self, manager: &mut ComponentsManager) {
+  fn update(&mut self, manager: &mut EntityManager) {
     let entity_ids = manager.get_entity_ids_for_pair::<Namable, Position>();
     for id in entity_ids.iter() {
       let name = manager.borrow_component::<Namable>(*id).unwrap();
@@ -182,8 +182,8 @@ And add the following lines in your Rust code to import the library.
 
 ```Rust
 use ecs_rust::world::World;
+use ecs_rust::entity_manager::EntityManager;
 use ecs_rust::component::Component;
-use ecs_rust::component_manager::ComponentsManager;
 use ecs_rust::system::System;
 ```
 

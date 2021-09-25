@@ -5,8 +5,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use ecs_rust::world::World;
+use ecs_rust::entity_manager::EntityManager;
 use ecs_rust::component::Component;
-use ecs_rust::component_manager::ComponentsManager;
 use ecs_rust::system::System;
 
 const CANVAS_ID: &str = "canvas";
@@ -155,7 +155,7 @@ impl Component for Visibility {
 }
 
 impl System for UserInputReflectSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let ids = manager.get_entity_ids_for_pair::<Position, Vaus>();
 		for id in ids.iter() {
 			let (x, _y) = fetch_user_input_buffer();
@@ -168,7 +168,7 @@ impl System for UserInputReflectSystem {
 }
 
 impl System for MoveSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let ids = manager.get_entity_ids_for_pair::<Position, Velocity>();
 		for id in ids.iter() {
 			let (position, velocity) = manager.borrow_component_pair_mut::<Position, Velocity>(*id).unwrap();
@@ -179,7 +179,7 @@ impl System for MoveSystem {
 }
 
 impl System for ReflectBoundarySystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let (canvas_width, canvas_height) = {
 			let canvas_size = &manager.borrow_components::<CanvasSize>().unwrap()[0];
 			(canvas_size.width, canvas_size.height)
@@ -199,7 +199,7 @@ impl System for ReflectBoundarySystem {
 	}
 }
 
-fn check_ball_rect_collision(manager: &ComponentsManager, ball_entity_id: usize, rect_entity_id: usize) -> bool {
+fn check_ball_rect_collision(manager: &EntityManager, ball_entity_id: usize, rect_entity_id: usize) -> bool {
 	let (ball_x, ball_y, ball_radius) = get_ball_param(manager, ball_entity_id);
 	let (rect_x, rect_y, rect_width, rect_height) = get_rect_param(manager, rect_entity_id);
 	// @TODO: Can be oprimized
@@ -222,20 +222,20 @@ fn check_ball_rect_collision(manager: &ComponentsManager, ball_entity_id: usize,
 	false
 }
 
-fn get_ball_param(manager: &ComponentsManager, entity_id: usize) -> (f64, f64, f64) {
+fn get_ball_param(manager: &EntityManager, entity_id: usize) -> (f64, f64, f64) {
 	let position = manager.borrow_component::<Position>(entity_id).unwrap();
 	let ball = manager.borrow_component::<Ball>(entity_id).unwrap();
 	(position.x, position.y, ball.radius)
 }
 
-fn get_rect_param(manager: &ComponentsManager, entity_id: usize) -> (f64, f64, f64, f64) {
+fn get_rect_param(manager: &EntityManager, entity_id: usize) -> (f64, f64, f64, f64) {
 	let position = manager.borrow_component::<Position>(entity_id).unwrap();
 	let rect = manager.borrow_component::<Rectangle>(entity_id).unwrap();
 	(position.x, position.y, rect.width, rect.height)
 }
 
 impl System for BallVausCollisionSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let ball_entity_id = manager.borrow_entity_ids::<Ball>()[0];
 		let vaus_entity_id = manager.borrow_entity_ids::<Vaus>()[0];
 		if check_ball_rect_collision(manager, ball_entity_id, vaus_entity_id) {
@@ -245,7 +245,7 @@ impl System for BallVausCollisionSystem {
 }
 
 impl BallVausCollisionSystem {
-	fn reflect(manager: &mut ComponentsManager, ball_entity_id: usize, vaus_entity_id: usize) {
+	fn reflect(manager: &mut EntityManager, ball_entity_id: usize, vaus_entity_id: usize) {
 		let (ball_x, ball_y, _ball_radius) = get_ball_param(manager, ball_entity_id);
 		let (vaus_x, vaus_y, _vaus_width, _vaus_height) = get_rect_param(manager, vaus_entity_id);
 
@@ -269,7 +269,7 @@ impl BallVausCollisionSystem {
 }
 
 impl System for BallBricksCollisionSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let ball_entity_id = manager.get_entity_ids_for_triple::<Ball, Position, Velocity>()[0];
 		let ids = manager.get_entity_ids_for_triple::<Brick, Position, Visibility>();
 		for id in ids.iter() {
@@ -285,7 +285,7 @@ impl System for BallBricksCollisionSystem {
 }
 
 impl BallBricksCollisionSystem {
-	fn reflect(manager: &mut ComponentsManager, ball_entity_id: usize, brick_entity_id: usize) {
+	fn reflect(manager: &mut EntityManager, ball_entity_id: usize, brick_entity_id: usize) {
 		let ball_x = manager.borrow_component::<Position>(ball_entity_id).unwrap().x;
 		let (brick_x, _brick_y, brick_width, _brick_height) = get_rect_param(manager, brick_entity_id);
 		let brick_left = brick_x - brick_width * 0.5;
@@ -303,14 +303,14 @@ impl BallBricksCollisionSystem {
 		velocity.y = new_v_y;
 	}
 
-	fn remove_brick(manager: &mut ComponentsManager, entity_id: usize) {
+	fn remove_brick(manager: &mut EntityManager, entity_id: usize) {
 		let visibility = manager.borrow_component_mut::<Visibility>(entity_id).unwrap();
 		visibility.visible = false;
 	}
 }
 
 impl System for RenderSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let (canvas_width, canvas_height) = RenderSystem::get_canvas_size(manager);
 
 		// @TODO: Is getting context every frame costly?
@@ -323,7 +323,7 @@ impl System for RenderSystem {
 }
 
 impl RenderSystem {
-	fn get_canvas_size(manager: &ComponentsManager) -> (f64, f64) {
+	fn get_canvas_size(manager: &EntityManager) -> (f64, f64) {
 		let canvas_size = &manager.borrow_components::<CanvasSize>().unwrap()[0];
 		(canvas_size.width, canvas_size.height)
 	}
@@ -332,7 +332,7 @@ impl RenderSystem {
 		context.clear_rect(0.0, 0.0, width, height);
 	}
 
-	fn render_ball(context: &web_sys::CanvasRenderingContext2d, manager: &ComponentsManager) {
+	fn render_ball(context: &web_sys::CanvasRenderingContext2d, manager: &EntityManager) {
 		let ids = manager.get_entity_ids_for_pair::<Position, Ball>();
 		for id in ids.iter() {
 			let (x, y, radius) = get_ball_param(manager, *id);
@@ -340,7 +340,7 @@ impl RenderSystem {
 		}
 	}
 
-	fn render_vaus(context: &web_sys::CanvasRenderingContext2d, manager: &ComponentsManager) {
+	fn render_vaus(context: &web_sys::CanvasRenderingContext2d, manager: &EntityManager) {
 		let ids = manager.get_entity_ids_for_pair::<Position, Vaus>();
 		for id in ids.iter() {
 			let (x, y, width, height) = get_rect_param(manager, *id);
@@ -348,7 +348,7 @@ impl RenderSystem {
 		}
 	}
 
-	fn render_bricks(context: &web_sys::CanvasRenderingContext2d, manager: &ComponentsManager) {
+	fn render_bricks(context: &web_sys::CanvasRenderingContext2d, manager: &EntityManager) {
 		let ids = manager.get_entity_ids_for_triple::<Position, Brick, Visibility>();
 		for id in ids.iter() {
 			if !manager.borrow_component::<Visibility>(*id).unwrap().visible {

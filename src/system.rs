@@ -1,5 +1,5 @@
-use super::component_manager::ComponentsManager;
+use super::entity_manager::EntityManager;
 
 pub trait System {
-	fn update(&mut self, component_manager: &mut ComponentsManager);
+	fn update(&mut self, manager: &mut EntityManager);
 }

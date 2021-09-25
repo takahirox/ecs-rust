@@ -5,8 +5,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use ecs_rust::world::World;
+use ecs_rust::entity_manager::EntityManager;
 use ecs_rust::component::Component;
-use ecs_rust::component_manager::ComponentsManager;
 use ecs_rust::system::System;
 
 const CANVAS_ID: &str = "canvas";
@@ -97,7 +97,7 @@ struct RenderSystem {
 }
 
 impl System for MoveSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let ids = manager.get_entity_ids_for_pair::<Position, Velocity>();
 		for id in ids.iter() {
 			let (position, velocity) = manager.borrow_component_pair_mut::<Position, Velocity>(*id).unwrap();
@@ -108,7 +108,7 @@ impl System for MoveSystem {
 }
 
 impl System for ReflectBoundarySystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let (canvas_width, canvas_height) = {
 			let canvas_size = &manager.borrow_components::<CanvasSize>().unwrap()[0];
 			(canvas_size.width, canvas_size.height)
@@ -129,7 +129,7 @@ impl System for ReflectBoundarySystem {
 }
 
 impl System for CollisionCheckSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let ids = manager.get_entity_ids_for_triple::<Position, Circle, Collidable>();
 		for id in ids.iter() {
 			let collidable = manager.borrow_component_mut::<Collidable>(*id).unwrap();
@@ -149,7 +149,7 @@ impl System for CollisionCheckSystem {
 }
 
 impl CollisionCheckSystem {
-	fn check_collision(&self, manager: &ComponentsManager, entity_id1: usize, entity_id2: usize) -> bool {
+	fn check_collision(&self, manager: &EntityManager, entity_id1: usize, entity_id2: usize) -> bool {
 		let position1 = manager.borrow_component::<Position>(entity_id1).unwrap();
 		let circle1 = manager.borrow_component::<Circle>(entity_id1).unwrap();
 		let position2 = manager.borrow_component::<Position>(entity_id2).unwrap();
@@ -161,7 +161,7 @@ impl CollisionCheckSystem {
 }
 
 impl System for RenderSystem {
-	fn update(&mut self, manager: &mut ComponentsManager) {
+	fn update(&mut self, manager: &mut EntityManager) {
 		let (canvas_width, canvas_height) = {
 			let canvas_size = &manager.borrow_components::<CanvasSize>().unwrap()[0];
 			(canvas_size.width, canvas_size.height)
