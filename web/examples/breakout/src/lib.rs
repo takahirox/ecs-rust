@@ -226,8 +226,8 @@ fn get_rect_param(manager: &EntityManager, entity_id: usize) -> (f64, f64, f64, 
 
 impl System for BallVausCollisionSystem {
 	fn update(&mut self, manager: &mut EntityManager) {
-		let ball_entity_id = manager.borrow_entity_ids::<Ball>()[0];
-		let vaus_entity_id = manager.borrow_entity_ids::<Vaus>()[0];
+		let ball_entity_id = manager.get_entity_ids::<Ball>()[0];
+		let vaus_entity_id = manager.get_entity_ids::<Vaus>()[0];
 		if check_ball_rect_collision(manager, ball_entity_id, vaus_entity_id) {
 			BallVausCollisionSystem::reflect(manager, ball_entity_id, vaus_entity_id);
 		}
