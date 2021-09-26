@@ -19,6 +19,10 @@ impl World {
 		self.entity_manager.create_entity()
 	}
 
+	pub fn remove_entity(&mut self, entity_id: usize) {
+		self.entity_manager.remove_entity(entity_id);
+	}
+
 	pub fn register_component<T: 'static + Component>(&mut self) -> &mut Self {
 		self.entity_manager.register::<T>();
 		self
