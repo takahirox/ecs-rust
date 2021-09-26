@@ -32,7 +32,7 @@ impl<T: 'static + Component> ComponentManagerTrait for ComponentManager<T> {
 }
 
 // @TODO: Write comment
-fn cast_manager<T: 'static + Component>
+pub fn cast_manager<T: 'static + Component>
 	(manager: &dyn ComponentManagerTrait) -> &ComponentManager<T> {
 	manager
 		.as_any()
@@ -41,7 +41,7 @@ fn cast_manager<T: 'static + Component>
 }
 
 // @TODO: Write comment
-fn cast_manager_mut<T: 'static + Component>
+pub fn cast_manager_mut<T: 'static + Component>
 	(manager: &mut dyn ComponentManagerTrait) -> &mut ComponentManager<T> {
 	manager
 		.as_any_mut()

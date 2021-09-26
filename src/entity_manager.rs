@@ -5,7 +5,12 @@ use std::vec;
 
 use super::entity::Entity;
 use super::component::Component;
-use super::component_manager::{ComponentManager, ComponentManagerTrait};
+use super::component_manager::{
+	ComponentManager,
+	ComponentManagerTrait,
+	cast_manager,
+	cast_manager_mut
+};
 
 struct Entities {
 	entities: Vec<Entity>,
@@ -300,35 +305,19 @@ impl EntityManager {
 
 	fn borrow_component_manager<T: 'static + Component>(&self) -> &ComponentManager<T> {
 		let type_id = TypeId::of::<T>();
-		cast_manager(self.manager_map.get(&type_id).unwrap())
+		cast_manager(self.manager_map.get(&type_id).unwrap().as_ref())
 	}
 
 	fn borrow_component_manager_mut<T: 'static + Component>(&mut self) -> &mut ComponentManager<T> {
 		let type_id = TypeId::of::<T>();
-		cast_manager_mut(self.manager_map.get_mut(&type_id).unwrap())
+		cast_manager_mut(self.manager_map.get_mut(&type_id).unwrap().as_mut())
 	}
-}
-
-fn cast_manager<T: 'static + Component>
-	(manager: &Box<dyn ComponentManagerTrait>) -> &ComponentManager<T> {
-	manager
-		.as_any()
-		.downcast_ref::<ComponentManager<T>>()
-		.unwrap()
-}
-
-fn cast_manager_mut<T: 'static + Component>
-	(manager: &mut Box<dyn ComponentManagerTrait>) -> &mut ComponentManager<T> {
-	manager
-		.as_any_mut()
-		.downcast_mut::<ComponentManager<T>>()
-		.unwrap()
 }
 
 // @TODO: Write comment
 fn cast_manager_mut_unsafe<T: 'static + Component>
 	(manager: &Box<dyn ComponentManagerTrait>) -> &mut ComponentManager<T> {
-	let ptr = cast_manager(manager)
+	let ptr = cast_manager(manager.as_ref())
 		as *const ComponentManager<T> as *mut ComponentManager<T>;
 	unsafe { transmute(ptr) }
 }
