@@ -7,15 +7,53 @@ use super::entity::Entity;
 use super::component::Component;
 use super::component_manager::{ComponentManager, ComponentManagerTrait};
 
-pub struct EntityManager {
+struct Entities {
 	entities: Vec<Entity>,
+	availables: Vec<usize>
+}
+
+impl Entities {
+	fn new() -> Self {
+		Entities {
+			entities: vec![],
+			availables: vec![]
+		}
+	}
+
+	fn has(&self, entity_id: usize) -> bool {
+		entity_id < self.entities.len() && self.entities[entity_id].is_alive()
+	}
+
+	fn create(&mut self) -> usize {
+		if self.availables.len() > 0 {
+			let index = self.availables.remove(0);
+			self.entities[index].reset();
+			return index;
+		}
+		let entity = Entity::new();
+		self.entities.push(entity);
+		self.entities.len() - 1
+	}
+
+	fn remove(&mut self, entity_id: usize) {
+		if !self.has(entity_id) {
+			// @TODO: Error handling
+			return;
+		}
+		self.entities[entity_id].invalid();
+		self.availables.push(entity_id);
+	}
+}
+
+pub struct EntityManager {
+	entities: Entities,
 	manager_map: HashMap<TypeId, Box<dyn ComponentManagerTrait>>
 }
 
 impl EntityManager {
 	pub fn new() -> Self {
 		EntityManager {
-			entities: vec![],
+			entities: Entities::new(),
 			manager_map: HashMap::new()
 		}
 	}
@@ -30,9 +68,16 @@ impl EntityManager {
 	}
 
 	pub fn create_entity(&mut self) -> usize {
-		let entity = Entity::new();
-		self.entities.push(entity);
-		self.entities.len() - 1
+		self.entities.create()
+	}
+
+	pub fn remove_entity(&mut self, entity_id: usize) {
+		for (_, manager) in self.manager_map.iter_mut() {
+			if manager.has(entity_id) {
+				manager.remove(entity_id);
+			}
+		}
+		self.entities.remove(entity_id);
 	}
 
 	pub fn add_component_to_entity<T: 'static + Component>(&mut self, entity_id: usize, component: T) -> &mut Self {
@@ -280,6 +325,7 @@ fn cast_manager_mut<T: 'static + Component>
 		.unwrap()
 }
 
+// @TODO: Write comment
 fn cast_manager_mut_unsafe<T: 'static + Component>
 	(manager: &Box<dyn ComponentManagerTrait>) -> &mut ComponentManager<T> {
 	let ptr = cast_manager(manager)

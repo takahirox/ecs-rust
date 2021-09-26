@@ -103,13 +103,6 @@ struct Rectangle {
 	height: f64
 }
 
-// ecs-rust doesn't support entity removal yet so
-// managing removed bricks with Visibility component for now.
-// @TODO: Support entity removal in ecs-rust
-struct Visibility {
-	visible: bool
-}
-
 struct UserInputReflectSystem {
 }
 
@@ -149,9 +142,6 @@ impl Component for Velocity {
 }
 
 impl Component for Rectangle {
-}
-
-impl Component for Visibility {
 }
 
 impl System for UserInputReflectSystem {
@@ -271,11 +261,8 @@ impl BallVausCollisionSystem {
 impl System for BallBricksCollisionSystem {
 	fn update(&mut self, manager: &mut EntityManager) {
 		let ball_entity_id = manager.get_entity_ids_for_triple::<Ball, Position, Velocity>()[0];
-		let ids = manager.get_entity_ids_for_triple::<Brick, Position, Visibility>();
+		let ids = manager.get_entity_ids_for_pair::<Brick, Position>();
 		for id in ids.iter() {
-			if !manager.borrow_component::<Visibility>(*id).unwrap().visible {
-				continue;
-			}
 			if check_ball_rect_collision(manager, ball_entity_id, *id) {
 				BallBricksCollisionSystem::reflect(manager, ball_entity_id, *id);
 				BallBricksCollisionSystem::remove_brick(manager, *id);
@@ -304,8 +291,7 @@ impl BallBricksCollisionSystem {
 	}
 
 	fn remove_brick(manager: &mut EntityManager, entity_id: usize) {
-		let visibility = manager.borrow_component_mut::<Visibility>(entity_id).unwrap();
-		visibility.visible = false;
+		manager.remove_entity(entity_id);
 	}
 }
 
@@ -349,11 +335,8 @@ impl RenderSystem {
 	}
 
 	fn render_bricks(context: &web_sys::CanvasRenderingContext2d, manager: &EntityManager) {
-		let ids = manager.get_entity_ids_for_triple::<Position, Brick, Visibility>();
+		let ids = manager.get_entity_ids_for_pair::<Position, Brick>();
 		for id in ids.iter() {
-			if !manager.borrow_component::<Visibility>(*id).unwrap().visible {
-				continue;
-			}
 			let (x, y, width, height) = get_rect_param(manager, *id);
 			RenderSystem::render_rect(&context, x, y, width, height, "gray");
 		}
@@ -392,8 +375,7 @@ pub fn start() {
 		.register_component::<Brick>()
 		.register_component::<Position>()
 		.register_component::<Velocity>()
-		.register_component::<Rectangle>()
-		.register_component::<Visibility>();
+		.register_component::<Rectangle>();
 
 	{
 		let entity_id = world.create_entity();
@@ -446,9 +428,6 @@ pub fn start() {
 				.add_component_to_entity(entity_id, Rectangle {
 					width: 80.0,
 					height: 20.0
-				})
-				.add_component_to_entity(entity_id, Visibility {
-					visible: true
 				});
 		}
 	}
