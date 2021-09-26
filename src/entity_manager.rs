@@ -96,13 +96,21 @@ impl EntityManager {
 		self
 	}
 
-	pub fn borrow_entity_ids<T: 'static + Component>(&self) -> &Vec<usize> {
+	// @TODO: Optimize. Creating Vec every call may be inefficient.
+	pub fn get_entity_ids<T: 'static + Component>(&self) -> Vec<usize> {
+		let mut v = Vec::new();
+
 		if ! self.has_component_manager::<T>() {
 			// @TODO: Better error handling
-			panic!("Unknown component");
+			println!("Unknown component");
+			return v;
 		}
 
-		self.borrow_component_manager::<T>().borrow_entity_ids()
+		let entity_ids = self.borrow_component_manager::<T>().borrow_entity_ids();
+		for id in entity_ids.iter() {
+			v.push(*id);
+		}
+		v
 	}
 
 	// @TODO: Optimize. Doing this in every world.update() is very inefficient.
