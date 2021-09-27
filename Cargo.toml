@@ -11,3 +11,6 @@ exclude = [
   "screenshots/*",
   "web/*"
 ]
+
+[badges]
+travis-ci = {repository = "takahirox/ecs-rust"}
