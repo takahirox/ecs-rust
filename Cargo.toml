@@ -7,3 +7,7 @@ edition = "2018"
 license = "MIT"
 homepage = "https://github.com/takahirox/ecs-rust"
 repository = "https://github.com/takahirox/ecs-rust"
+exclude = [
+  "screenshots/*",
+  "web/*"
+]
