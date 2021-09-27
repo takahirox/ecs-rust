@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use ecs_rust::world::World;
-use ecs_rust::entity_manager::EntityManager;
+use ecs_rust::entity_manager::{EntityIdAccessor, EntityManager};
 use ecs_rust::component::Component;
 use ecs_rust::system::System;
 
@@ -56,9 +56,9 @@ struct RenderSystem {
 }
 
 impl System for RenderSystem {
-	fn update(&mut self, manager: &mut EntityManager) {
+	fn update(&mut self, manager: &mut EntityManager, accessor: &mut EntityIdAccessor) {
 		let context = get_context();
-		let ids = manager.get_entity_ids_for_pair::<Position, Circle>();
+		let ids = accessor.borrow_ids_for_pair::<Position, Circle>(manager).unwrap();
 		for id in ids.iter() {
 			let position = manager.borrow_component::<Position>(*id).unwrap();
 			let circle = manager.borrow_component::<Circle>(*id).unwrap();

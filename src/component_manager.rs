@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::any::Any;
+use std::any::{Any, TypeId};
 
 use super::component::Component;
 
@@ -7,8 +7,12 @@ use super::component::Component;
 pub trait ComponentManagerTrait {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
+
+	// @TODO: Write comment
+
 	fn has(&self, entity_id: usize) -> bool;
 	fn remove(&mut self, entity_id: usize);
+	fn get_type_id(&self) -> TypeId;
 }
 
 impl<T: 'static + Component> ComponentManagerTrait for ComponentManager<T> {
@@ -28,6 +32,10 @@ impl<T: 'static + Component> ComponentManagerTrait for ComponentManager<T> {
 	fn remove(&mut self, entity_id: usize) {
 		let manager = cast_manager_mut::<T>(self);
 		manager.remove(entity_id);
+	}
+
+	fn get_type_id(&self) -> TypeId {
+		TypeId::of::<T>()
 	}
 }
 

@@ -50,17 +50,153 @@ impl Entities {
 	}
 }
 
+// @TODO: Is this name good?
+pub struct EntityIdAccessor {
+	cache_map: HashMap<TypeId, Vec<usize>>,
+	updated_frame_map: HashMap<TypeId, u64> // @TODO: Rename
+}
+
+impl EntityIdAccessor {
+	pub fn new() -> Self {
+		EntityIdAccessor {
+			cache_map: HashMap::new(),
+			updated_frame_map: HashMap::new()
+		}
+	}
+
+	fn update_cached_ids(&mut self, manager: &EntityManager, type_id: &TypeId, src: &Vec<usize>) {
+		let dst = self.cache_map.get_mut(type_id).unwrap();
+		dst.clear();
+		for id in src.iter() {
+			dst.push(*id);
+		}
+		self.updated_frame_map.insert(*type_id, manager.get_frame());
+	}
+
+	pub fn borrow_ids<T: 'static + Component>(&mut self, manager: &EntityManager) -> Option<&Vec<usize>> {
+		if !manager.has_component_manager::<T>() {
+			return None;
+		}
+
+		let type_id = TypeId::of::<T>();
+		if !self.cache_map.contains_key(&type_id) {
+			self.cache_map.insert(type_id, Vec::new());
+			self.update_cached_ids(manager, &type_id, &manager.get_entity_ids::<T>());
+		} else {
+			let updated_frame = *self.updated_frame_map.get(&type_id).unwrap();
+			if manager.get_updated_frame::<T>() != updated_frame {
+				self.update_cached_ids(manager, &type_id, &manager.get_entity_ids::<T>());
+			}
+		}
+		self.cache_map.get(&type_id)
+	}
+
+	pub fn borrow_ids_for_pair<
+		T1: 'static + Component,
+		T2: 'static + Component
+	>(&mut self, manager: &EntityManager) -> Option<&Vec<usize>> {
+		if !manager.has_component_manager::<T1>() ||
+			!manager.has_component_manager::<T2>() {
+			return None;
+		}
+
+		let type_id = TypeId::of::<(T1, T2)>();
+		if !self.cache_map.contains_key(&type_id) {
+			self.cache_map.insert(type_id, Vec::new());
+			self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_pair::<T1, T2>());
+		} else {
+			let updated_frame = *self.updated_frame_map.get(&type_id).unwrap();
+			if manager.get_updated_frame::<T1>() != updated_frame ||
+				manager.get_updated_frame::<T2>() != updated_frame {
+				self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_pair::<T1, T2>());
+			}
+		}
+		self.cache_map.get(&type_id)
+	}
+
+	pub fn borrow_ids_for_triple<
+		T1: 'static + Component,
+		T2: 'static + Component,
+		T3: 'static + Component
+	>(&mut self, manager: &EntityManager) -> Option<&Vec<usize>> {
+		if !manager.has_component_manager::<T1>() ||
+			!manager.has_component_manager::<T2>() ||
+			!manager.has_component_manager::<T3>() {
+			return None;
+		}
+
+		let type_id = TypeId::of::<(T1, T2, T3)>();
+		if !self.cache_map.contains_key(&type_id) {
+			self.cache_map.insert(type_id, Vec::new());
+			self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_triple::<T1, T2, T3>());
+		} else {
+			let updated_frame = *self.updated_frame_map.get(&type_id).unwrap();
+			if manager.get_updated_frame::<T1>() != updated_frame ||
+				manager.get_updated_frame::<T2>() != updated_frame ||
+				manager.get_updated_frame::<T3>() != updated_frame {
+				self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_triple::<T1, T2, T3>());
+			}
+		}
+		self.cache_map.get(&type_id)
+	}
+
+	pub fn borrow_ids_for_quad<
+		T1: 'static + Component,
+		T2: 'static + Component,
+		T3: 'static + Component,
+		T4: 'static + Component
+	>(&mut self, manager: &EntityManager) -> Option<&Vec<usize>> {
+		if !manager.has_component_manager::<T1>() ||
+			!manager.has_component_manager::<T2>() ||
+			!manager.has_component_manager::<T3>() ||
+			!manager.has_component_manager::<T4>() {
+			return None;
+		}
+
+		let type_id = TypeId::of::<(T1, T2, T3, T4)>();
+		if !self.cache_map.contains_key(&type_id) {
+			self.cache_map.insert(type_id, Vec::new());
+			self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_quad::<T1, T2, T3, T4>());
+		} else {
+			let updated_frame = *self.updated_frame_map.get(&type_id).unwrap();
+			if manager.get_updated_frame::<T1>() != updated_frame ||
+				manager.get_updated_frame::<T2>() != updated_frame ||
+				manager.get_updated_frame::<T3>() != updated_frame ||
+				manager.get_updated_frame::<T4>() != updated_frame {
+				self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_quad::<T1, T2, T3, T4>());
+			}
+		}
+		self.cache_map.get(&type_id)
+	}
+}
+
 pub struct EntityManager {
 	entities: Entities,
-	manager_map: HashMap<TypeId, Box<dyn ComponentManagerTrait>>
+	manager_map: HashMap<TypeId, Box<dyn ComponentManagerTrait>>,
+	frame: u64, // Rename
+	updated_frame_map: HashMap<TypeId, u64> // Rename
 }
 
 impl EntityManager {
 	pub fn new() -> Self {
 		EntityManager {
 			entities: Entities::new(),
-			manager_map: HashMap::new()
+			manager_map: HashMap::new(),
+			frame: 0,
+			updated_frame_map: HashMap::new()
 		}
+	}
+
+	pub fn increment_frame(&mut self) {
+		self.frame += 1;
+	}
+
+	fn get_frame(&self) -> u64 {
+		self.frame
+	}
+
+	fn get_updated_frame<T: 'static + Component>(&self) -> u64 {
+		*self.updated_frame_map.get(&TypeId::of::<T>()).unwrap()
 	}
 
 	pub fn register<T: 'static + Component>(&mut self) -> &mut Self {
@@ -68,6 +204,7 @@ impl EntityManager {
 		if ! self.has_component_manager::<T>() {
 			let type_id = TypeId::of::<T>();
 			self.manager_map.insert(type_id, Box::new(ComponentManager::<T>::new()));
+			self.updated_frame_map.insert(type_id, self.get_frame());
 		}
 		self
 	}
@@ -77,9 +214,12 @@ impl EntityManager {
 	}
 
 	pub fn remove_entity(&mut self, entity_id: usize) {
+		let frame = self.get_frame();
 		for (_, manager) in self.manager_map.iter_mut() {
 			if manager.has(entity_id) {
 				manager.remove(entity_id);
+				// @TODO: Write comment for +1
+				self.updated_frame_map.insert(manager.get_type_id(), frame + 1);
 			}
 		}
 		self.entities.remove(entity_id);
@@ -93,11 +233,12 @@ impl EntityManager {
 		}
 		self.borrow_component_manager_mut::<T>()
 			.add(entity_id, component);
+		self.updated_frame_map.insert(TypeId::of::<T>(), self.get_frame());
+
 		self
 	}
 
-	// @TODO: Optimize. Creating Vec every call may be inefficient.
-	pub fn get_entity_ids<T: 'static + Component>(&self) -> Vec<usize> {
+	fn get_entity_ids<T: 'static + Component>(&self) -> Vec<usize> {
 		let mut v = Vec::new();
 
 		if ! self.has_component_manager::<T>() {
@@ -113,8 +254,10 @@ impl EntityManager {
 		v
 	}
 
-	// @TODO: Optimize. Doing this in every world.update() is very inefficient.
-	pub fn get_entity_ids_for_pair<T: 'static + Component, U: 'static + Component>(&self) -> Vec<usize> {
+	fn get_entity_ids_for_pair<
+		T: 'static + Component,
+		U: 'static + Component
+	>(&self) -> Vec<usize> {
 		let mut v = Vec::new();
 
 		if ! self.has_component_manager::<T>() ||
@@ -134,9 +277,11 @@ impl EntityManager {
 		v
 	}
 
-	// @TODO: Optimize. Doing this in every world.update() is very inefficient.
-	pub fn get_entity_ids_for_triple
-		<T: 'static + Component, U: 'static + Component, V: 'static + Component>(&self) -> Vec<usize> {
+	fn get_entity_ids_for_triple<
+		T: 'static + Component,
+		U: 'static + Component,
+		V: 'static + Component
+	>(&self) -> Vec<usize> {
 		let mut v = Vec::new();
 
 		if ! self.has_component_manager::<T>() ||
@@ -158,9 +303,12 @@ impl EntityManager {
 		v
 	}
 
-	// @TODO: Optimize. Doing this in every world.update() is very inefficient.
-	pub fn get_entity_ids_for_quad
-		<T: 'static + Component, U: 'static + Component, V: 'static + Component, W: 'static + Component>(&self) -> Vec<usize> {
+	fn get_entity_ids_for_quad<
+		T: 'static + Component,
+		U: 'static + Component,
+		V: 'static + Component,
+		W: 'static + Component
+	>(&self) -> Vec<usize> {
 		let mut v = Vec::new();
 
 		if ! self.has_component_manager::<T>() ||
@@ -220,9 +368,10 @@ impl EntityManager {
 		}
 	}
 
-	pub fn borrow_component_pair_mut
-		<T: 'static + Component, U: 'static + Component>(&mut self, entity_id: usize)
-		-> Option<(&mut T, &mut U)> {
+	pub fn borrow_component_pair_mut<
+		T: 'static + Component,
+		U: 'static + Component
+	>(&mut self, entity_id: usize) -> Option<(&mut T, &mut U)> {
 		if ! self.has_component_manager::<T>() ||
 			! self.has_component_manager::<U>() {
 			return None;
@@ -244,10 +393,11 @@ impl EntityManager {
 		))
 	}
 
-	pub fn borrow_component_triple_mut
-		<T: 'static + Component, U: 'static + Component, V: 'static + Component>
-		(&mut self, entity_id: usize)
-		-> Option<(&mut T, &mut U, &mut V)> {
+	pub fn borrow_component_triple_mut<
+		T: 'static + Component,
+		U: 'static + Component,
+		V: 'static + Component
+	>(&mut self, entity_id: usize) -> Option<(&mut T, &mut U, &mut V)> {
 		if ! self.has_component_manager::<T>() ||
 			! self.has_component_manager::<U>() ||
 			! self.has_component_manager::<V>() {
@@ -273,10 +423,12 @@ impl EntityManager {
 		))
 	}
 
-	pub fn borrow_component_quad_mut
-		<T: 'static + Component, U: 'static + Component, V: 'static + Component, W: 'static + Component>
-		(&mut self, entity_id: usize)
-		-> Option<(&mut T, &mut U, &mut V, &mut W)> {
+	pub fn borrow_component_quad_mut<
+		T: 'static + Component,
+		U: 'static + Component,
+		V: 'static + Component,
+		W: 'static + Component
+	>(&mut self, entity_id: usize) -> Option<(&mut T, &mut U, &mut V, &mut W)> {
 		if ! self.has_component_manager::<T>() ||
 			! self.has_component_manager::<U>() ||
 			! self.has_component_manager::<V>() ||

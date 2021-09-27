@@ -1,9 +1,10 @@
-use super::entity_manager::EntityManager;
+use super::entity_manager::{EntityIdAccessor, EntityManager};
 use super::component::Component;
 use super::system::System;
 
 pub struct World {
 	entity_manager: EntityManager,
+	entity_id_accessor: EntityIdAccessor,
 	systems: Vec<Box<dyn System>>
 }
 
@@ -11,6 +12,7 @@ impl World {
 	pub fn new() -> Self {
 		World {
 			entity_manager: EntityManager::new(),
+			entity_id_accessor: EntityIdAccessor::new(),
 			systems: vec![]
 		}
 	}
@@ -40,7 +42,8 @@ impl World {
 
 	pub fn update(&mut self) {
 		for system in self.systems.iter_mut() {
-			system.update(&mut self.entity_manager);
+			system.update(&mut self.entity_manager, &mut self.entity_id_accessor);
+			self.entity_manager.increment_frame();
 		}
 	}
 }

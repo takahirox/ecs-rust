@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use ecs_rust::world::World;
-use ecs_rust::entity_manager::EntityManager;
+use ecs_rust::entity_manager::{EntityIdAccessor, EntityManager};
 use ecs_rust::component::Component;
 use ecs_rust::system::System;
 
@@ -97,8 +97,8 @@ struct RenderSystem {
 }
 
 impl System for MoveSystem {
-	fn update(&mut self, manager: &mut EntityManager) {
-		let ids = manager.get_entity_ids_for_pair::<Position, Velocity>();
+	fn update(&mut self, manager: &mut EntityManager, accessor: &mut EntityIdAccessor) {
+		let ids = accessor.borrow_ids_for_pair::<Position, Velocity>(manager).unwrap();
 		for id in ids.iter() {
 			let (position, velocity) = manager.borrow_component_pair_mut::<Position, Velocity>(*id).unwrap();
 			position.x += velocity.x;
@@ -108,12 +108,12 @@ impl System for MoveSystem {
 }
 
 impl System for ReflectBoundarySystem {
-	fn update(&mut self, manager: &mut EntityManager) {
+	fn update(&mut self, manager: &mut EntityManager, accessor: &mut EntityIdAccessor) {
 		let (canvas_width, canvas_height) = {
 			let canvas_size = &manager.borrow_components::<CanvasSize>().unwrap()[0];
 			(canvas_size.width, canvas_size.height)
 		};
-		let ids = manager.get_entity_ids_for_triple::<Position, Velocity, Circle>();
+		let ids = accessor.borrow_ids_for_triple::<Position, Velocity, Circle>(manager).unwrap();
 		for id in ids.iter() {
 			let (position, velocity, circle) = manager.borrow_component_triple_mut::<Position, Velocity, Circle>(*id).unwrap();
 			if position.x - circle.radius < 0.0 ||
@@ -129,8 +129,8 @@ impl System for ReflectBoundarySystem {
 }
 
 impl System for CollisionCheckSystem {
-	fn update(&mut self, manager: &mut EntityManager) {
-		let ids = manager.get_entity_ids_for_triple::<Position, Circle, Collidable>();
+	fn update(&mut self, manager: &mut EntityManager, accessor: &mut EntityIdAccessor) {
+		let ids = accessor.borrow_ids_for_triple::<Position, Circle, Collidable>(manager).unwrap();
 		for id in ids.iter() {
 			let collidable = manager.borrow_component_mut::<Collidable>(*id).unwrap();
 			collidable.collided = false;
@@ -161,7 +161,7 @@ impl CollisionCheckSystem {
 }
 
 impl System for RenderSystem {
-	fn update(&mut self, manager: &mut EntityManager) {
+	fn update(&mut self, manager: &mut EntityManager, accessor: &mut EntityIdAccessor) {
 		let (canvas_width, canvas_height) = {
 			let canvas_size = &manager.borrow_components::<CanvasSize>().unwrap()[0];
 			(canvas_size.width, canvas_size.height)
@@ -171,7 +171,7 @@ impl System for RenderSystem {
 		let context = get_context();
 		context.clear_rect(0.0, 0.0, canvas_width, canvas_height);
 
-		let ids = manager.get_entity_ids_for_triple::<Position, Circle, Collidable>();
+		let ids = accessor.borrow_ids_for_triple::<Position, Circle, Collidable>(manager).unwrap();
 		for id in ids.iter() {
 			let position = manager.borrow_component::<Position>(*id).unwrap();
 			let circle = manager.borrow_component::<Circle>(*id).unwrap();
