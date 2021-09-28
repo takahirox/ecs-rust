@@ -174,14 +174,14 @@ impl System for ReflectBoundarySystem {
 			if position.x - circle.radius < 0.0 ||
 				position.x + circle.radius >= canvas_width {
 				velocity.x = -velocity.x;
-				position.x = js_sys::Math::max(position.x, circle.radius);
-				position.x = js_sys::Math::min(position.x, canvas_width - circle.radius);
+				position.x = position.x.max(circle.radius);
+				position.x = position.x.min(canvas_width - circle.radius);
 			}
 			if position.y - circle.radius < 0.0 ||
 				position.y + circle.radius >= canvas_height {
 				velocity.y = -velocity.y;
-				position.y = js_sys::Math::max(position.y, circle.radius);
-				position.y = js_sys::Math::min(position.y, canvas_height - circle.radius);
+				position.y = position.y.max(circle.radius);
+				position.y = position.y.min(canvas_height - circle.radius);
 			}
 		}
 	}
@@ -214,15 +214,15 @@ impl CollisionSystem {
 
 		let dx = x - user_x;
 		let dy = y - user_y;
-		let theta = js_sys::Math::atan2(dy, dx);
+		let theta = dy.atan2(dx);
 		let new_distance = user_radius + radius;
-		let new_x = user_x + new_distance * js_sys::Math::cos(theta);
-		let new_y = user_y + new_distance * js_sys::Math::sin(theta);
+		let new_x = user_x + new_distance * theta.cos();
+		let new_y = user_y + new_distance * theta.sin();
 
 		let velocity = manager.borrow_component::<Velocity>(entity_id).unwrap();
 		let v_scalar = (velocity.x * velocity.x + velocity.y * velocity.y).sqrt();
-		let new_vx = v_scalar * js_sys::Math::cos(theta);
-		let new_vy = v_scalar * js_sys::Math::sin(theta);
+		let new_vx = v_scalar * theta.cos();
+		let new_vy = v_scalar * theta.sin();
 
 		let position = manager.borrow_component_mut::<Position>(entity_id).unwrap();
 		position.x = new_x;

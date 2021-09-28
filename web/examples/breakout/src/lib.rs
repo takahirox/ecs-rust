@@ -241,7 +241,7 @@ impl BallVausCollisionSystem {
 
 		let dx = ball_x - vaus_x;
 		let dy = ball_y - vaus_y;
-		let theta = js_sys::Math::atan2(dy, dx);
+		let theta = dy.atan2(dx);
 
 		let theta = theta * 0.8 + f64::consts::PI * match theta >= 0.0 {
 			true => 0.1, false => -0.1
@@ -249,8 +249,8 @@ impl BallVausCollisionSystem {
 
 		let velocity = manager.borrow_component::<Velocity>(ball_entity_id).unwrap();
 		let v_scalar = (velocity.x * velocity.x + velocity.y * velocity.y).sqrt();
-		let new_vx = v_scalar * js_sys::Math::cos(theta);
-		let new_vy = v_scalar * js_sys::Math::sin(theta);
+		let new_vx = v_scalar * theta.cos();
+		let new_vy = v_scalar * theta.sin();
 
 		let velocity = manager.borrow_component_mut::<Velocity>(ball_entity_id).unwrap();
 		velocity.x = new_vx;
