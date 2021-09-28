@@ -194,7 +194,7 @@ fn check_ball_rect_collision(manager: &EntityManager, ball_entity_id: usize, rec
 	let (rect_x, rect_y, rect_width, rect_height) = get_rect_param(manager, rect_entity_id);
 	// @TODO: Can be oprimized
 	let rect_left = rect_x - rect_width * 0.5;
-	let rect_right = rect_x + rect_width *0.5;
+	let rect_right = rect_x + rect_width * 0.5;
 	let rect_top = rect_y - rect_height * 0.5;
 	let rect_bottom = rect_y  + rect_height * 0.5;
 	if ball_x >= rect_left &&
@@ -366,6 +366,9 @@ pub fn start() {
 		(canvas.width() as f64, canvas.height() as f64)
 	};
 
+	let scale_h = canvas_width / 480.0;
+	let scale_v = canvas_height / 480.0;
+
 	let mut world = World::new();
 
 	world
@@ -392,11 +395,11 @@ pub fn start() {
 			.add_component_to_entity(entity_id, Vaus {})
 			.add_component_to_entity(entity_id, Position {
 				x: canvas_width * 0.5,
-				y: 420.0
+				y: canvas_height - 60.0 * scale_v
 			})
 			.add_component_to_entity(entity_id, Rectangle {
-				width: 100.0,
-				height: 10.0
+				width: 100.0 * scale_h,
+				height: 10.0 * scale_v
 			});
 	}
 
@@ -412,7 +415,7 @@ pub fn start() {
 			})
 			.add_component_to_entity(entity_id, Velocity {
 				x: 0.0,
-				y: 6.0
+				y: 6.0 * scale_v
 			});
 	}
 
@@ -422,12 +425,12 @@ pub fn start() {
 			world
 				.add_component_to_entity(entity_id, Brick {})
 				.add_component_to_entity(entity_id, Position {
-					x: j as f64 * 85.0 + 70.0,
-					y: i as f64 * 25.0 + 40.0
+					x: (j as f64 * 85.0 + 70.0) * scale_h,
+					y: (i as f64 * 25.0 + 40.0) * scale_v
 				})
 				.add_component_to_entity(entity_id, Rectangle {
-					width: 80.0,
-					height: 20.0
+					width: 80.0 * scale_h,
+					height: 20.0 * scale_v
 				});
 		}
 	}
