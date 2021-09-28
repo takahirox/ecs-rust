@@ -326,16 +326,16 @@ impl EntityManager {
 	}
 
 	pub fn borrow_component_pair_mut<
-		T: 'static + Component,
-		U: 'static + Component
-	>(&mut self, entity_id: usize) -> Option<(&mut T, &mut U)> {
-		if ! self.has_component_manager::<T>() ||
-			! self.has_component_manager::<U>() {
+		T1: 'static + Component,
+		T2: 'static + Component
+	>(&mut self, entity_id: usize) -> Option<(&mut T1, &mut T2)> {
+		if ! self.has_component_manager::<T1>() ||
+			! self.has_component_manager::<T2>() {
 			return None;
 		}
 
-		let type_id1 = TypeId::of::<T>();
-		let type_id2 = TypeId::of::<U>();
+		let type_id1 = TypeId::of::<T1>();
+		let type_id2 = TypeId::of::<T2>();
 
 		let manager1 = cast_manager_mut_unsafe(self.manager_map.get(&type_id1).unwrap());
 		let manager2 = cast_manager_mut_unsafe(self.manager_map.get(&type_id2).unwrap());
@@ -351,19 +351,19 @@ impl EntityManager {
 	}
 
 	pub fn borrow_component_triple_mut<
-		T: 'static + Component,
-		U: 'static + Component,
-		V: 'static + Component
-	>(&mut self, entity_id: usize) -> Option<(&mut T, &mut U, &mut V)> {
-		if ! self.has_component_manager::<T>() ||
-			! self.has_component_manager::<U>() ||
-			! self.has_component_manager::<V>() {
+		T1: 'static + Component,
+		T2: 'static + Component,
+		T3: 'static + Component
+	>(&mut self, entity_id: usize) -> Option<(&mut T1, &mut T2, &mut T3)> {
+		if ! self.has_component_manager::<T1>() ||
+			! self.has_component_manager::<T2>() ||
+			! self.has_component_manager::<T3>() {
 			return None;
 		}
 
-		let type_id1 = TypeId::of::<T>();
-		let type_id2 = TypeId::of::<U>();
-		let type_id3 = TypeId::of::<V>();
+		let type_id1 = TypeId::of::<T1>();
+		let type_id2 = TypeId::of::<T2>();
+		let type_id3 = TypeId::of::<T3>();
 
 		let manager1 = cast_manager_mut_unsafe(self.manager_map.get(&type_id1).unwrap());
 		let manager2 = cast_manager_mut_unsafe(self.manager_map.get(&type_id2).unwrap());
@@ -381,22 +381,22 @@ impl EntityManager {
 	}
 
 	pub fn borrow_component_quad_mut<
-		T: 'static + Component,
-		U: 'static + Component,
-		V: 'static + Component,
-		W: 'static + Component
-	>(&mut self, entity_id: usize) -> Option<(&mut T, &mut U, &mut V, &mut W)> {
-		if ! self.has_component_manager::<T>() ||
-			! self.has_component_manager::<U>() ||
-			! self.has_component_manager::<V>() ||
-			! self.has_component_manager::<W>() {
+		T1: 'static + Component,
+		T2: 'static + Component,
+		T3: 'static + Component,
+		T4: 'static + Component
+	>(&mut self, entity_id: usize) -> Option<(&mut T1, &mut T2, &mut T3, &mut T4)> {
+		if ! self.has_component_manager::<T1>() ||
+			! self.has_component_manager::<T2>() ||
+			! self.has_component_manager::<T3>() ||
+			! self.has_component_manager::<T4>() {
 			return None;
 		}
 
-		let type_id1 = TypeId::of::<T>();
-		let type_id2 = TypeId::of::<U>();
-		let type_id3 = TypeId::of::<V>();
-		let type_id4 = TypeId::of::<W>();
+		let type_id1 = TypeId::of::<T1>();
+		let type_id2 = TypeId::of::<T2>();
+		let type_id3 = TypeId::of::<T3>();
+		let type_id4 = TypeId::of::<T4>();
 
 		let manager1 = cast_manager_mut_unsafe(self.manager_map.get(&type_id1).unwrap());
 		let manager2 = cast_manager_mut_unsafe(self.manager_map.get(&type_id2).unwrap());
