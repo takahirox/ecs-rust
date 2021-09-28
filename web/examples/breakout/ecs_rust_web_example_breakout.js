@@ -228,8 +228,6 @@ function handleError(f, args) {
     }
 }
 
-function notDefined(what) { return () => { throw new Error(`${what} is not defined`); }; }
-
 async function load(module, imports) {
     if (typeof Response === 'function' && module instanceof Response) {
         if (typeof WebAssembly.instantiateStreaming === 'function') {
@@ -412,9 +410,6 @@ async function init(input) {
         var ret = getObject(arg0) === undefined;
         return ret;
     };
-    imports.wbg.__wbg_atan2_4bd027e7156952f9 = typeof Math.atan2 == 'function' ? Math.atan2 : notDefined('Math.atan2');
-    imports.wbg.__wbg_cos_ecc5af9290e03ec8 = typeof Math.cos == 'function' ? Math.cos : notDefined('Math.cos');
-    imports.wbg.__wbg_sin_f65fc013499e6b8b = typeof Math.sin == 'function' ? Math.sin : notDefined('Math.sin');
     imports.wbg.__wbindgen_debug_string = function(arg0, arg1) {
         var ret = debugString(getObject(arg1));
         var ptr0 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -425,15 +420,15 @@ async function init(input) {
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbindgen_closure_wrapper165 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper162 = function(arg0, arg1, arg2) {
         var ret = makeMutClosure(arg0, arg1, 57, __wbg_adapter_16);
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper167 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper164 = function(arg0, arg1, arg2) {
         var ret = makeMutClosure(arg0, arg1, 57, __wbg_adapter_19);
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper169 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper166 = function(arg0, arg1, arg2) {
         var ret = makeMutClosure(arg0, arg1, 57, __wbg_adapter_22);
         return addHeapObject(ret);
     };

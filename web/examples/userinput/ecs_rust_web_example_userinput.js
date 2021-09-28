@@ -409,12 +409,7 @@ async function init(input) {
         var ret = getObject(arg0) === undefined;
         return ret;
     };
-    imports.wbg.__wbg_atan2_4bd027e7156952f9 = typeof Math.atan2 == 'function' ? Math.atan2 : notDefined('Math.atan2');
-    imports.wbg.__wbg_cos_ecc5af9290e03ec8 = typeof Math.cos == 'function' ? Math.cos : notDefined('Math.cos');
-    imports.wbg.__wbg_max_f581329ef581f4c2 = typeof Math.max == 'function' ? Math.max : notDefined('Math.max');
-    imports.wbg.__wbg_min_295ad415febb4b2f = typeof Math.min == 'function' ? Math.min : notDefined('Math.min');
     imports.wbg.__wbg_random_a582babfa4489c72 = typeof Math.random == 'function' ? Math.random : notDefined('Math.random');
-    imports.wbg.__wbg_sin_f65fc013499e6b8b = typeof Math.sin == 'function' ? Math.sin : notDefined('Math.sin');
     imports.wbg.__wbindgen_debug_string = function(arg0, arg1) {
         var ret = debugString(getObject(arg1));
         var ptr0 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -425,15 +420,15 @@ async function init(input) {
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbindgen_closure_wrapper154 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper149 = function(arg0, arg1, arg2) {
         var ret = makeMutClosure(arg0, arg1, 53, __wbg_adapter_16);
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper156 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper151 = function(arg0, arg1, arg2) {
         var ret = makeMutClosure(arg0, arg1, 53, __wbg_adapter_19);
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper158 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper153 = function(arg0, arg1, arg2) {
         var ret = makeMutClosure(arg0, arg1, 53, __wbg_adapter_22);
         return addHeapObject(ret);
     };
