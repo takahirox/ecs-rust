@@ -359,6 +359,21 @@ pub fn start() {
 			update_user_input_buffer(event.offset_x() as f64, event.offset_y() as f64);
 		}) as Box<dyn FnMut(_)>);
 		canvas.add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref()).unwrap();
+		closure.forget();
+	}
+
+	{
+		let canvas = get_canvas();
+		let closure = Closure::wrap(Box::new(move |event: web_sys::TouchEvent| {
+			let page_x = event.touches().get(0).unwrap().page_x();
+			let page_y = event.touches().get(0).unwrap().page_y();
+			let offset_left = event.touches().get(0).unwrap().target().unwrap().dyn_ref::<web_sys::HtmlElement>().unwrap().offset_left();
+			let offset_top = event.touches().get(0).unwrap().target().unwrap().dyn_ref::<web_sys::HtmlElement>().unwrap().offset_top();
+			update_user_input_buffer(
+				(page_x - offset_left) as f64,
+				(page_y - offset_top) as f64
+			);
+		}) as Box<dyn FnMut(_)>);
 		canvas.add_event_listener_with_callback("touchstart", closure.as_ref().unchecked_ref()).unwrap();
 		canvas.add_event_listener_with_callback("touchmove", closure.as_ref().unchecked_ref()).unwrap();
 		canvas.add_event_listener_with_callback("touchend", closure.as_ref().unchecked_ref()).unwrap();
