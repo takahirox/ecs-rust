@@ -64,30 +64,30 @@ impl EntityIdAccessor {
 		}
 	}
 
-	fn update_cached_ids(&mut self, manager: &EntityManager, type_id: &TypeId, src: &Vec<usize>) {
-		let dst = self.cache_map.get_mut(type_id).unwrap();
-		dst.clear();
-		for id in src.iter() {
-			dst.push(*id);
-		}
-		self.updated_frame_map.insert(*type_id, manager.get_frame());
-	}
-
 	pub fn borrow_ids<T: 'static + Component>(&mut self, manager: &EntityManager) -> Option<&Vec<usize>> {
 		if !manager.has_component_manager::<T>() {
 			return None;
 		}
 
 		let type_id = TypeId::of::<T>();
-		if !self.cache_map.contains_key(&type_id) {
+		let needs_update = if !self.cache_map.contains_key(&type_id) {
 			self.cache_map.insert(type_id, Vec::new());
-			self.update_cached_ids(manager, &type_id, &manager.get_entity_ids::<T>());
+			true
 		} else {
 			let updated_frame = *self.updated_frame_map.get(&type_id).unwrap();
-			if manager.get_updated_frame::<T>() != updated_frame {
-				self.update_cached_ids(manager, &type_id, &manager.get_entity_ids::<T>());
+			manager.get_updated_frame::<T>() != updated_frame
+		};
+
+		if needs_update {
+			let src = &manager.borrow_entity_ids::<T>().unwrap();
+			let dst = self.cache_map.get_mut(&type_id).unwrap();
+			dst.clear();
+			for id in src.iter() {
+				dst.push(*id);
 			}
+			self.updated_frame_map.insert(type_id, manager.get_frame());
 		}
+
 		self.cache_map.get(&type_id)
 	}
 
@@ -101,16 +101,29 @@ impl EntityIdAccessor {
 		}
 
 		let type_id = TypeId::of::<(T1, T2)>();
-		if !self.cache_map.contains_key(&type_id) {
+		let needs_update = if !self.cache_map.contains_key(&type_id) {
 			self.cache_map.insert(type_id, Vec::new());
-			self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_pair::<T1, T2>());
+			true
 		} else {
 			let updated_frame = *self.updated_frame_map.get(&type_id).unwrap();
-			if manager.get_updated_frame::<T1>() != updated_frame ||
-				manager.get_updated_frame::<T2>() != updated_frame {
-				self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_pair::<T1, T2>());
+			manager.get_updated_frame::<T1>() != updated_frame ||
+				manager.get_updated_frame::<T2>() != updated_frame
+		};
+
+		if needs_update {
+			// @TODO: Can be optimized if iterating a shorter array
+			let src = &manager.borrow_entity_ids::<T1>().unwrap();
+			let manager2 = manager.borrow_component_manager::<T2>();
+			let dst = self.cache_map.get_mut(&type_id).unwrap();
+			dst.clear();
+			for id in src.iter() {
+				if manager2.has(*id) {
+					dst.push(*id);
+				}
 			}
+			self.updated_frame_map.insert(type_id, manager.get_frame());
 		}
+
 		self.cache_map.get(&type_id)
 	}
 
@@ -126,17 +139,31 @@ impl EntityIdAccessor {
 		}
 
 		let type_id = TypeId::of::<(T1, T2, T3)>();
-		if !self.cache_map.contains_key(&type_id) {
+		let needs_update = if !self.cache_map.contains_key(&type_id) {
 			self.cache_map.insert(type_id, Vec::new());
-			self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_triple::<T1, T2, T3>());
+			true
 		} else {
 			let updated_frame = *self.updated_frame_map.get(&type_id).unwrap();
-			if manager.get_updated_frame::<T1>() != updated_frame ||
+			manager.get_updated_frame::<T1>() != updated_frame ||
 				manager.get_updated_frame::<T2>() != updated_frame ||
-				manager.get_updated_frame::<T3>() != updated_frame {
-				self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_triple::<T1, T2, T3>());
+				manager.get_updated_frame::<T3>() != updated_frame
+		};
+
+		if needs_update {
+			// @TODO: Can be optimized if iterating the shortest array
+			let src = &manager.borrow_entity_ids::<T1>().unwrap();
+			let manager2 = manager.borrow_component_manager::<T2>();
+			let manager3 = manager.borrow_component_manager::<T3>();
+			let dst = self.cache_map.get_mut(&type_id).unwrap();
+			dst.clear();
+			for id in src.iter() {
+				if manager2.has(*id) && manager3.has(*id) {
+					dst.push(*id);
+				}
 			}
+			self.updated_frame_map.insert(type_id, manager.get_frame());
 		}
+
 		self.cache_map.get(&type_id)
 	}
 
@@ -154,18 +181,33 @@ impl EntityIdAccessor {
 		}
 
 		let type_id = TypeId::of::<(T1, T2, T3, T4)>();
-		if !self.cache_map.contains_key(&type_id) {
+		let needs_update = if !self.cache_map.contains_key(&type_id) {
 			self.cache_map.insert(type_id, Vec::new());
-			self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_quad::<T1, T2, T3, T4>());
+			true
 		} else {
 			let updated_frame = *self.updated_frame_map.get(&type_id).unwrap();
-			if manager.get_updated_frame::<T1>() != updated_frame ||
+			manager.get_updated_frame::<T1>() != updated_frame ||
 				manager.get_updated_frame::<T2>() != updated_frame ||
 				manager.get_updated_frame::<T3>() != updated_frame ||
-				manager.get_updated_frame::<T4>() != updated_frame {
-				self.update_cached_ids(manager, &type_id, &manager.get_entity_ids_for_quad::<T1, T2, T3, T4>());
+				manager.get_updated_frame::<T4>() != updated_frame
+		};
+
+		if needs_update {
+			// @TODO: Can be optimized if iterating the shortest array
+			let src = &manager.borrow_entity_ids::<T1>().unwrap();
+			let manager2 = manager.borrow_component_manager::<T2>();
+			let manager3 = manager.borrow_component_manager::<T3>();
+			let manager4 = manager.borrow_component_manager::<T4>();
+			let dst = self.cache_map.get_mut(&type_id).unwrap();
+			dst.clear();
+			for id in src.iter() {
+				if manager2.has(*id) && manager3.has(*id) && manager4.has(*id) {
+					dst.push(*id);
+				}
 			}
+			self.updated_frame_map.insert(type_id, manager.get_frame());
 		}
+
 		self.cache_map.get(&type_id)
 	}
 }
@@ -238,98 +280,13 @@ impl EntityManager {
 		self
 	}
 
-	fn get_entity_ids<T: 'static + Component>(&self) -> Vec<usize> {
-		let mut v = Vec::new();
-
+	fn borrow_entity_ids<T: 'static + Component>(&self) -> Option<&Vec<usize>> {
 		if ! self.has_component_manager::<T>() {
 			// @TODO: Better error handling
 			println!("Unknown component");
-			return v;
+			return None;
 		}
-
-		let entity_ids = self.borrow_component_manager::<T>().borrow_entity_ids();
-		for id in entity_ids.iter() {
-			v.push(*id);
-		}
-		v
-	}
-
-	fn get_entity_ids_for_pair<
-		T: 'static + Component,
-		U: 'static + Component
-	>(&self) -> Vec<usize> {
-		let mut v = Vec::new();
-
-		if ! self.has_component_manager::<T>() ||
-			! self.has_component_manager::<U>() {
-			// @TODO: Better error handling
-			println!("Unknown component");
-			return v;
-		}
-
-		let entity_ids = self.borrow_component_manager::<T>().borrow_entity_ids();
-		let manager = self.borrow_component_manager::<U>();
-		for id in entity_ids.iter() {
-			if manager.has(*id) {
-				v.push(*id);
-			}
-		}
-		v
-	}
-
-	fn get_entity_ids_for_triple<
-		T: 'static + Component,
-		U: 'static + Component,
-		V: 'static + Component
-	>(&self) -> Vec<usize> {
-		let mut v = Vec::new();
-
-		if ! self.has_component_manager::<T>() ||
-			! self.has_component_manager::<U>() ||
-			! self.has_component_manager::<V>() {
-			// @TODO: Better error handling
-			println!("Unknown component");
-			return v;
-		}
-
-		let entity_ids = self.borrow_component_manager::<T>().borrow_entity_ids();
-		let manager1 = self.borrow_component_manager::<U>();
-		let manager2 = self.borrow_component_manager::<V>();
-		for id in entity_ids.iter() {
-			if manager1.has(*id) && manager2.has(*id) {
-				v.push(*id);
-			}
-		}
-		v
-	}
-
-	fn get_entity_ids_for_quad<
-		T: 'static + Component,
-		U: 'static + Component,
-		V: 'static + Component,
-		W: 'static + Component
-	>(&self) -> Vec<usize> {
-		let mut v = Vec::new();
-
-		if ! self.has_component_manager::<T>() ||
-			! self.has_component_manager::<U>() ||
-			! self.has_component_manager::<V>() ||
-			! self.has_component_manager::<W>() {
-			// @TODO: Better error handling
-			println!("Unknown component");
-			return v;
-		}
-
-		let entity_ids = self.borrow_component_manager::<T>().borrow_entity_ids();
-		let manager1 = self.borrow_component_manager::<U>();
-		let manager2 = self.borrow_component_manager::<V>();
-		let manager3 = self.borrow_component_manager::<W>();
-		for id in entity_ids.iter() {
-			if manager1.has(*id) && manager2.has(*id) && manager3.has(*id) {
-				v.push(*id);
-			}
-		}
-		v
+		Some(self.borrow_component_manager::<T>().borrow_entity_ids())
 	}
 
 	pub fn borrow_component<T: 'static + Component>(&self, entity_id: usize) -> Option<&T> {
