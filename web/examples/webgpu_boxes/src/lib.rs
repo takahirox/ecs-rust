@@ -191,7 +191,12 @@ fn create_box(
 ) -> (ResourceId<Mesh>, ResourceId<Node>) {
 	let material_rid = MaterialHelper::create_basic_material(
 		pools,
-		Color::set(&mut Color::create(), 0.5, 0.5, 1.0),
+		Color::set(
+			&mut Color::create(),
+			rand() as f32,
+			rand() as f32,
+			rand() as f32,
+		),
 	);
 
 	let mesh_rid = pools.borrow_mut::<Mesh>().add(Mesh::new(*geometry_rid, material_rid));
@@ -266,9 +271,9 @@ pub async fn start() {
 				})
 				.add_component_to_entity(entity_id, RotationSpeed {
 					speed: [
-						(rand() as f32 * 2.0 - 1.0).to_radians(),
-						(rand() as f32 * 2.0 - 1.0).to_radians(),
-						(rand() as f32 * 2.0 - 1.0).to_radians(),
+						(rand() as f32 * 1.0 - 0.5).to_radians(),
+						(rand() as f32 * 1.0 - 0.5).to_radians(),
+						(rand() as f32 * 1.0 - 0.5).to_radians(),
 					],
 				});
 		}
