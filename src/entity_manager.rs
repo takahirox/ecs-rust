@@ -325,6 +325,84 @@ impl EntityManager {
 		}
 	}
 
+	pub fn borrow_components_pair_mut<
+		T1: 'static + Component,
+		T2: 'static + Component,
+	>(&mut self) -> Option<(&mut Vec<T1>, &mut Vec<T2>)> {
+		if ! self.has_component_manager::<T1>() ||
+			! self.has_component_manager::<T2>() {
+			return None;
+		}
+
+		let type_id1 = TypeId::of::<T1>();
+		let type_id2 = TypeId::of::<T2>();
+
+		let manager1 = cast_manager_mut_unsafe(self.manager_map.get(&type_id1).unwrap());
+		let manager2 = cast_manager_mut_unsafe(self.manager_map.get(&type_id2).unwrap());
+
+		Some((
+			manager1.borrow_components_mut(),
+			manager2.borrow_components_mut(),
+		))
+	}
+
+	pub fn borrow_components_triple_mut<
+		T1: 'static + Component,
+		T2: 'static + Component,
+		T3: 'static + Component,
+	>(&mut self) -> Option<(&mut Vec<T1>, &mut Vec<T2>, &mut Vec<T3>)> {
+		if ! self.has_component_manager::<T1>() ||
+			! self.has_component_manager::<T2>() ||
+			! self.has_component_manager::<T3>() {
+			return None;
+		}
+
+		let type_id1 = TypeId::of::<T1>();
+		let type_id2 = TypeId::of::<T2>();
+		let type_id3 = TypeId::of::<T3>();
+
+		let manager1 = cast_manager_mut_unsafe(self.manager_map.get(&type_id1).unwrap());
+		let manager2 = cast_manager_mut_unsafe(self.manager_map.get(&type_id2).unwrap());
+		let manager3 = cast_manager_mut_unsafe(self.manager_map.get(&type_id3).unwrap());
+
+		Some((
+			manager1.borrow_components_mut(),
+			manager2.borrow_components_mut(),
+			manager3.borrow_components_mut(),
+		))
+	}
+
+	pub fn borrow_components_quad_mut<
+		T1: 'static + Component,
+		T2: 'static + Component,
+		T3: 'static + Component,
+		T4: 'static + Component,
+	>(&mut self) -> Option<(&mut Vec<T1>, &mut Vec<T2>, &mut Vec<T3>, &mut Vec<T4>)> {
+		if ! self.has_component_manager::<T1>() ||
+			! self.has_component_manager::<T2>() ||
+			! self.has_component_manager::<T3>() ||
+			! self.has_component_manager::<T4>() {
+			return None;
+		}
+
+		let type_id1 = TypeId::of::<T1>();
+		let type_id2 = TypeId::of::<T2>();
+		let type_id3 = TypeId::of::<T3>();
+		let type_id4 = TypeId::of::<T4>();
+
+		let manager1 = cast_manager_mut_unsafe(self.manager_map.get(&type_id1).unwrap());
+		let manager2 = cast_manager_mut_unsafe(self.manager_map.get(&type_id2).unwrap());
+		let manager3 = cast_manager_mut_unsafe(self.manager_map.get(&type_id3).unwrap());
+		let manager4 = cast_manager_mut_unsafe(self.manager_map.get(&type_id4).unwrap());
+
+		Some((
+			manager1.borrow_components_mut(),
+			manager2.borrow_components_mut(),
+			manager3.borrow_components_mut(),
+			manager4.borrow_components_mut(),
+		))
+	}
+
 	pub fn borrow_component_pair_mut<
 		T1: 'static + Component,
 		T2: 'static + Component
