@@ -283,13 +283,17 @@ h1 a {
 		padding: 0 var(--panel-padding) var(--panel-padding) var(--panel-padding);
 	}
 
+		#panel #content div {
+			color: var(--secondary-text-color);
+		}
+
 		#panel #content ul {
 			list-style-type: none;
-			padding: 0px;
-			margin: 0px 0 20px 0;
+			padding: 0;
+			margin: 0;
 		}
 		#panel #content ul li {
-			margin: 1px 0;
+			margin: 0 0 0 10px;
 		}
 
 		#panel #content h2:not(.hidden) {

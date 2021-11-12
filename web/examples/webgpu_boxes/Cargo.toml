@@ -1,0 +1,23 @@
+[package]
+name = "ecs_rust_web_example_webgpu_boxes"
+version = "0.1.0"
+authors = ["Takahiro <hogehoge@gachapin.jp>"]
+edition = "2018"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+console_error_panic_hook = "0.1.6"
+console_log = "0.1.2"
+ecs_rust = {path = "../../../"}
+js-sys = "0.3.55"
+wasm-bindgen = "0.2.78"
+wasm-bindgen-futures = "0.4.28"
+web-sys = "0.3.55"
+wgpu_rust_renderer = "0.0.4"
+
+[dependencies.winit]
+version = "0.25"
+features = ["web-sys"]

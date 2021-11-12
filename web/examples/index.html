@@ -21,12 +21,21 @@
     <iframe id="viewer" name="viewer" onmousewheel=""></iframe>
 
     <script>
-      const exampleNames = [
+      const categoryNames = [
         'canvas',
-        'collision',
-        'userinput',
-        'breakout'
+        'webgpu'
       ];
+      const exampleNames = {
+        canvas: [
+          'circles',
+          'collision',
+          'userinput',
+          'breakout'
+        ],
+        webgpu: [
+          'boxes'
+        ]
+      };
 
       const content = document.getElementById('content');
       const viewer = document.getElementById('viewer');
@@ -41,21 +50,30 @@
         panel.classList.remove('open');
       };
 
-      exampleNames.forEach(name => {
-        const a = document.createElement('a');
-        a.innerText = name;
-        a.href = name + '/index.html';
-        a.target = 'viewer';
-        a.addEventListener('click', event => {
-          if (event.button !== 0 || event.ctrlKey || event.altKey ||
-            event.shiftKey || event.metaKey) {
-            return;
-          }
-          event.preventDefault();
-          openExample(name);
+      categoryNames.forEach(categoryName => {
+        const div = document.createElement('div');
+        div.innerText = categoryName;
+        content.appendChild(div);
+
+        const ul = document.createElement('ul');
+        content.appendChild(ul);
+        exampleNames[categoryName].forEach(name => {
+          const a = document.createElement('a');
+          a.innerText = name;
+          a.href = categoryName + '_' + name + '/index.html';
+          a.target = 'viewer';
+          a.addEventListener('click', event => {
+            if (event.button !== 0 || event.ctrlKey || event.altKey ||
+              event.shiftKey || event.metaKey) {
+              return;
+            }
+            event.preventDefault();
+            openExample(categoryName + '_' + name);
+          });
+          const li = document.createElement('li');
+          li.appendChild(a);
+          ul.appendChild(li);
         });
-        content.appendChild(a);
-        content.appendChild(document.createElement('br'));
       });
 
       const onClickForOpen = event => {
@@ -75,9 +93,13 @@
 
       if (window.location.hash !== '') {
         const hash = window.location.hash.substring(1);
-        if (exampleNames.includes(hash)) {
-          openExample(hash);
-        }
+        categoryNames.forEach(categoryName => {
+          exampleNames[categoryName].forEach(name => {
+            if (categoryName + '_' + name === hash) {
+              openExample(hash);
+            }
+          });
+        });
       }
     </script>
   </body>
